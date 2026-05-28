@@ -6,11 +6,11 @@
 
 **Architecture:** Express sirve la SPA de Vite y expone `/api/transcribe` y `/api/summarize`, que llaman a OpenRouter chat-completions vía `fetch` nativo. El frontend React mantiene una cola secuencial de transcripción y persiste texto/resumen en `localStorage`.
 
-**Tech Stack:** React 19, Vite 6, Express 4, TypeScript, Tailwind 4, OpenRouter API. **Sin tests** (fuera de alcance por decisión del usuario); verificación vía `npm run lint` (`tsc --noEmit`) y ejecución manual.
+**Tech Stack:** React 19, Vite 6, Express 4, TypeScript, Tailwind 4, OpenRouter API. **Sin tests** (fuera de alcance por decisión del usuario); verificación vía `bun run lint` (`tsc --noEmit`) y ejecución manual.
 
 **Spec:** `docs/superpowers/specs/2026-05-28-openrouter-migration-design.md`
 
-**Nota sobre verificación sin tests:** Cada tarea termina con `npm run lint` (debe pasar sin errores de tipos) y, donde aplica, una comprobación manual descrita. No se escriben archivos de test.
+**Nota sobre verificación sin tests:** Cada tarea termina con `bun run lint` (debe pasar sin errores de tipos) y, donde aplica, una comprobación manual descrita. No se escriben archivos de test.
 
 **Nota sobre el model id:** Antes de la Tarea 2, verificar en https://openrouter.ai/models?q=gemini el id de flash audio-capable más barato vigente. Por defecto `google/gemini-2.5-flash`; configurable por `OPENROUTER_MODEL`.
 
@@ -27,18 +27,18 @@ En `package.json`, cambiar `"name": "react-example"` por `"name": "audioscribe"`
 
 - [ ] **Step 2: Instalar dependencias**
 
-Run: `npm install`
+Run: `bun install`
 Expected: Crea `node_modules/`, sin errores. `@google/genai` ya no aparece.
 
 - [ ] **Step 3: Verificar lint base**
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS (sin errores de tipos). Si `server.ts` aún importa `@google/genai`, fallará — se arregla en Task 2. Si falla solo por eso, continuar.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add package.json package-lock.json
+git add package.json bun.lockb
 git commit -m "chore: remove @google/genai, rename package to audioscribe"
 ```
 
@@ -218,7 +218,7 @@ startServer();
 
 - [ ] **Step 2: Verificar lint**
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS. `@google/genai` ya no se importa.
 
 - [ ] **Step 3: Commit**
@@ -270,7 +270,7 @@ APP_URL="http://localhost:3000"
 import 'dotenv/config';
 ```
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS.
 
 - [ ] **Step 4: Commit (NO commitear `.env.local`)**
@@ -285,7 +285,7 @@ Verificar: `git status` NO debe listar `.env.local` (cubierto por `.gitignore`).
 - [ ] **Step 5: Comprobación manual end-to-end**
 
 El usuario pega su key real en `.env.local`. Luego:
-Run: `npm run dev`
+Run: `bun run dev`
 Subir un audio de WhatsApp en el navegador y verificar que aparece la transcripción. Generar resumen y verificar texto.
 
 ---
@@ -372,7 +372,7 @@ Renderizar el error: justo antes de `<TranscriptionSummary ... />` en el JSX:
 
 - [ ] **Step 3: Verificar lint**
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -468,12 +468,12 @@ Añadir un `useEffect` que persista `items` sin `file`/`blob` (justo después de
 
 - [ ] **Step 3: Verificar lint**
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS.
 
 - [ ] **Step 4: Comprobación manual**
 
-Run: `npm run dev`
+Run: `bun run dev`
 Transcribir un audio, refrescar la página → la transcripción y el resumen persisten. Items hidratados desde localStorage no tienen `file`/`blob` (no se re-suben).
 
 - [ ] **Step 5: Commit**
@@ -578,12 +578,12 @@ Dentro del `.map`, en la cabecera del item (el `<div className="flex items-cente
 
 - [ ] **Step 3: Verificar lint**
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS.
 
 - [ ] **Step 4: Comprobación manual**
 
-Run: `npm run dev`
+Run: `bun run dev`
 Verificar: borrar item lo quita; copiar copia al portapapeles; reintentar en un item con error re-procesa (solo si se subió en esta sesión).
 
 - [ ] **Step 5: Commit**
@@ -647,7 +647,7 @@ En el header del bloque de resumen (el `<div className="shrink-0 border-b ...">`
 
 - [ ] **Step 2: Verificar lint**
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -694,7 +694,7 @@ por un sort estable que pone los items sin fecha al final preservando orden de i
 
 - [ ] **Step 2: Verificar lint**
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -734,10 +734,10 @@ React 19 + Vite + Express + TypeScript + Tailwind. Transcription and summary use
 
 **Prerequisites:** Node.js, an OpenRouter API key (https://openrouter.ai/keys).
 
-1. Install dependencies: `npm install`
+1. Install dependencies: `bun install`
 2. Copy `.env.example` to `.env.local` and set `OPENROUTER_API_KEY`.
    Optionally set `OPENROUTER_MODEL` (defaults to `google/gemini-2.5-flash`).
-3. Run the app: `npm run dev` → http://localhost:3000
+3. Run the app: `bun run dev` → http://localhost:3000
 
 ## Features
 
@@ -748,14 +748,14 @@ React 19 + Vite + Express + TypeScript + Tailwind. Transcription and summary use
 
 ## Build
 
-`npm run build` then `npm run start` (serves `dist/` in production mode).
+`bun run build` then `bun run start` (serves `dist/` in production mode).
 ```
 
 - [ ] **Step 3: Verificar lint y arranque**
 
-Run: `npm run lint`
+Run: `bun run lint`
 Expected: PASS.
-Run: `npm run dev` y comprobar que la app arranca en http://localhost:3000.
+Run: `bun run dev` y comprobar que la app arranca en http://localhost:3000.
 
 - [ ] **Step 4: Commit final**
 
@@ -768,7 +768,7 @@ git commit -m "docs: rewrite README and app title for AudioScribe/OpenRouter"
 
 ## Notas de implementación
 
-- **No escribir tests** (decisión del usuario). La verificación es `npm run lint` + comprobación manual.
+- **No escribir tests** (decisión del usuario). La verificación es `bun run lint` + comprobación manual.
 - **No commitear `.env.local`** (cubierto por `.gitignore`).
 - Mantener los commits pequeños y por tarea como se indica.
 - Los items hidratados desde `localStorage` no conservan `file`/`blob`; por eso retry está deshabilitado para ellos (no hay audio que reenviar). Esto es intencional.
