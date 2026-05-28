@@ -1,14 +1,16 @@
 import React from 'react';
 import { AudioItem } from '../types';
-import { Loader2, Music, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
+import { Loader2, AlertCircle, Trash2, RotateCcw, Copy } from 'lucide-react';
 import { formatDate } from '../utils';
 import ReactMarkdown from 'react-markdown';
 
 interface AudioItemsListProps {
   items: AudioItem[];
+  onDelete: (id: string) => void;
+  onRetry: (id: string) => void;
 }
 
-export function AudioItemsList({ items }: AudioItemsListProps) {
+export function AudioItemsList({ items, onDelete, onRetry }: AudioItemsListProps) {
   if (items.length === 0) return null;
 
   return (
@@ -25,11 +27,38 @@ export function AudioItemsList({ items }: AudioItemsListProps) {
              <div className="flex-1 min-w-0">
                <div className="flex items-center justify-between mb-1">
                  <p className="text-sm font-semibold text-gray-100 truncate">{item.fileName}</p>
-                 <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded flex items-center gap-1">
-                    {item.status === 'processing' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500"/>}
-                    {item.status === 'error' && <AlertCircle className="w-3 h-3 text-red-400"/>}
-                    {item.date ? formatDate(item.date) : "Today"}
-                 </span>
+                 <div className="flex items-center gap-2 shrink-0">
+                   <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded flex items-center gap-1">
+                      {item.status === 'processing' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500"/>}
+                      {item.status === 'error' && <AlertCircle className="w-3 h-3 text-red-400"/>}
+                      {item.date ? formatDate(item.date) : "Today"}
+                   </span>
+                   {item.status === 'done' && item.transcription && (
+                     <button
+                       onClick={() => navigator.clipboard.writeText(item.transcription ?? '')}
+                       title="Copy transcription"
+                       className="text-gray-500 hover:text-indigo-400 transition-colors"
+                     >
+                       <Copy className="w-3.5 h-3.5" />
+                     </button>
+                   )}
+                   {item.status === 'error' && (item.file || item.blob) && (
+                     <button
+                       onClick={() => onRetry(item.id)}
+                       title="Retry"
+                       className="text-gray-500 hover:text-indigo-400 transition-colors"
+                     >
+                       <RotateCcw className="w-3.5 h-3.5" />
+                     </button>
+                   )}
+                   <button
+                     onClick={() => onDelete(item.id)}
+                     title="Delete"
+                     className="text-gray-500 hover:text-red-400 transition-colors"
+                   >
+                     <Trash2 className="w-3.5 h-3.5" />
+                   </button>
+                 </div>
                </div>
                
                {item.status === 'processing' && (

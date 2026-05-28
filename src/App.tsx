@@ -157,6 +157,20 @@ export default function App() {
     }
   };
 
+  const handleDeleteItem = (id: string) => {
+    setItems(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleRetryItem = (id: string) => {
+    setItems(prev => prev.map(p => {
+      // Solo se puede reintentar si aún hay audio en memoria de esta sesión
+      if (p.id === id && (p.file || p.blob)) {
+        return { ...p, status: 'idle', error: undefined };
+      }
+      return p;
+    }));
+  };
+
   const completedCount = items.filter(i => i.status === 'done').length;
   const canSummarize = completedCount > 0 && !isSummarizing;
 
@@ -200,7 +214,7 @@ export default function App() {
         {summaryError && <p className="text-xs text-red-400">{summaryError}</p>}
         <TranscriptionSummary summary={summary} isSummarizing={isSummarizing} />
 
-        <AudioItemsList items={items} />
+        <AudioItemsList items={items} onDelete={handleDeleteItem} onRetry={handleRetryItem} />
 
       </main>
     </div>
