@@ -5,10 +5,21 @@ import { TranscriptionSummary } from './components/TranscriptionSummary';
 import { AudioItem, AudioStatus } from './types';
 import { parseWhatsAppDate } from './utils';
 import { MessageSquareQuote, Sparkles } from 'lucide-react';
+import { useLocalStorage } from './hooks/useLocalStorage';
 
 export default function App() {
-  const [items, setItems] = useState<AudioItem[]>([]);
-  const [summary, setSummary] = useState<string>('');
+  const [items, setItems] = useState<AudioItem[]>(() => {
+    try {
+      const raw = localStorage.getItem('audioscribe.items');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as AudioItem[];
+      // Las fechas se serializan como string -> rehidratar a Date
+      return parsed.map((it) => ({ ...it, date: it.date ? new Date(it.date) : undefined }));
+    } catch {
+      return [];
+    }
+  });
+  const [summary, setSummary] = useLocalStorage<string>('audioscribe.summary', '');
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   
@@ -71,6 +82,15 @@ export default function App() {
     const hasIdle = items.some(item => item.status === 'idle');
     if (hasIdle) {
       processQueue(items);
+    }
+  }, [items]);
+
+  useEffect(() => {
+    try {
+      const serializable = items.map(({ file, blob, ...rest }) => rest);
+      localStorage.setItem('audioscribe.items', JSON.stringify(serializable));
+    } catch {
+      // ignore
     }
   }, [items]);
 
