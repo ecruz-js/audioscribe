@@ -106,11 +106,17 @@ export default function App() {
     // Sort items if they have dates
     setItems(prev => {
       const combined = [...prev, ...newItems];
-      return combined.sort((a, b) => {
-        if (a.date && b.date) return a.date.getTime() - b.date.getTime();
-        // If sorting mixed with no dates, just put dates later or maintain order
-        return 0; // naive for now
-      });
+      return combined
+        .map((item, index) => ({ item, index }))
+        .sort((a, b) => {
+          const da = a.item.date?.getTime();
+          const db = b.item.date?.getTime();
+          if (da != null && db != null) return da - db;
+          if (da != null) return -1; // con fecha va antes
+          if (db != null) return 1;
+          return a.index - b.index; // ambos sin fecha: orden de inserción
+        })
+        .map(({ item }) => item);
     });
   };
 
