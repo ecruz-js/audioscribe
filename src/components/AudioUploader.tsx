@@ -11,6 +11,7 @@ export function AudioUploader({ onFilesSelected, onAudioRecorded }: AudioUploade
   const [isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [micError, setMicError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -37,7 +38,7 @@ export function AudioUploader({ onFilesSelected, onAudioRecorded }: AudioUploade
     }
   };
 
-  const handeFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files).filter(file => file.type.startsWith('audio/'));
       if (files.length > 0) {
@@ -48,6 +49,7 @@ export function AudioUploader({ onFilesSelected, onAudioRecorded }: AudioUploade
   };
 
   const startRecording = async () => {
+    setMicError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -74,7 +76,7 @@ export function AudioUploader({ onFilesSelected, onAudioRecorded }: AudioUploade
       }, 1000);
     } catch (err) {
       console.error('Error accessing microphone:', err);
-      alert('Could not access microphone. Please allow permissions.');
+      setMicError('Could not access microphone. Please allow permissions.');
     }
   };
 
@@ -99,6 +101,14 @@ export function AudioUploader({ onFilesSelected, onAudioRecorded }: AudioUploade
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
         className={cn(
           "flex-1 h-40 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer text-center group",
           isDragging ? "bg-white/[0.05] border-indigo-500/50" : "bg-white/[0.02] border-white/10 hover:bg-white/[0.04] hover:border-indigo-500/50"
@@ -117,7 +127,7 @@ export function AudioUploader({ onFilesSelected, onAudioRecorded }: AudioUploade
           accept="audio/*" 
           className="hidden" 
           ref={fileInputRef}
-          onChange={handeFileSelect}
+          onChange={handleFileSelect}
         />
       </div>
 
@@ -132,6 +142,7 @@ export function AudioUploader({ onFilesSelected, onAudioRecorded }: AudioUploade
               <Mic className="w-4 h-4" />
               Start Recording
             </button>
+            {micError && <p className="text-xs text-red-400 mt-3">{micError}</p>}
           </div>
         ) : (
           <div className="h-full bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-indigo-500/20 p-5 rounded-2xl flex flex-col justify-center">

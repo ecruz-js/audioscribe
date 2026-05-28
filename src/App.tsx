@@ -10,6 +10,7 @@ export default function App() {
   const [items, setItems] = useState<AudioItem[]>([]);
   const [summary, setSummary] = useState<string>('');
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   
   // Track if we are currently processing queue so we don't start multiple workers
   const isProcessingQueue = useRef(false);
@@ -112,6 +113,7 @@ export default function App() {
 
     setIsSummarizing(true);
     setSummary('');
+    setSummaryError(null);
 
     try {
       const response = await fetch('/api/summarize', {
@@ -129,7 +131,7 @@ export default function App() {
       setSummary(data.text);
     } catch (error) {
       console.error(error);
-      alert('Failed to generate summary');
+      setSummaryError('Failed to generate summary');
     } finally {
       setIsSummarizing(false);
     }
@@ -175,6 +177,7 @@ export default function App() {
           </div>
         )}
 
+        {summaryError && <p className="text-xs text-red-400">{summaryError}</p>}
         <TranscriptionSummary summary={summary} isSummarizing={isSummarizing} />
 
         <AudioItemsList items={items} />
