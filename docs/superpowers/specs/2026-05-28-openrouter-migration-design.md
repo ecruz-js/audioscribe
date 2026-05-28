@@ -30,7 +30,6 @@ Estado solo en memoria (se pierde al refrescar). Sin tests, sin git, sin
   metadatos. **No** guarda el audio crudo (demasiado pesado).
 - **Audio largo:** sin chunking; el modelo de chat no tiene el tope de 60s del
   endpoint STT.
-- **Runner de tests:** Vitest.
 - **Límite de subida:** 25MB.
 - **Fuera de alcance:** Docker, deploy, base de datos, multi-dispositivo.
 
@@ -89,7 +88,7 @@ Browser (React)                Express server              OpenRouter
 - `git init` + `.gitignore` ya cubre `.env*`, `node_modules`, `dist`.
 - `.env.local` con placeholder (el usuario pega la key real).
 - `.env.example`: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (opcional). Quitar `GEMINI_API_KEY`, `APP_URL`.
-- `package.json`: quitar `@google/genai`; añadir `vitest` (+ `@testing-library` si hace falta) a devDeps; script `test`. Renombrar `name` a `audioscribe`.
+- `package.json`: quitar `@google/genai`. Renombrar `name` a `audioscribe`.
 - README: pasos reales (OpenRouter key, `npm install`, `npm run dev`); título correcto. `index.html` title.
 
 ## Flujo de datos
@@ -107,14 +106,6 @@ Browser (React)                Express server              OpenRouter
   `error` + botón reintentar (si hay audio en memoria).
 - Resumen sin items `done`: no-op (botón deshabilitado).
 
-## Testing (Vitest)
-
-- Unit: `parseWhatsAppDate` (válido/ inválido), comparador de sort (con/sin fecha),
-  `audioFormatFromMime`.
-- Backend (fetch mockeado, sin red real): `/api/transcribe` sin archivo → 400;
-  oversize → 413; formato no soportado → 415; happy path parsea `choices[0]`.
-- `useLocalStorage`: round-trip y manejo de JSON corrupto.
-
 ## Orden de ejecución
 
 1. `git init` + `npm install`.
@@ -123,8 +114,7 @@ Browser (React)                Express server              OpenRouter
 4. Persistencia localStorage (`useLocalStorage` + `App`).
 5. Acciones por item (retry/delete) + copiar/descargar.
 6. Sort fix + a11y.
-7. Tests.
-8. README + `package.json` + commit final.
+7. README + `package.json` + commit final.
 
 ## Fuera de alcance (YAGNI)
 
