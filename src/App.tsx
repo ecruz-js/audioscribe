@@ -35,7 +35,10 @@ export default function App() {
     for (let i = 0; i < updatedItems.length; i++) {
       if (updatedItems[i].status === 'idle') {
         const item = updatedItems[i];
-        
+
+        // Items hydrated from localStorage have no audio in memory — skip them.
+        if (!item.file && !item.blob) continue;
+
         // Mark as processing
         setItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'processing' } : p));
         
@@ -75,6 +78,15 @@ export default function App() {
     }
     
     isProcessingQueue.current = false;
+
+    // Items may have been added while we were processing; pick them up now
+    // that the lock is released.
+    setItems(prev => {
+      if (prev.some(p => p.status === 'idle' && (p.file || p.blob))) {
+        queueMicrotask(() => processQueue(prev));
+      }
+      return prev;
+    });
   };
 
   useEffect(() => {
@@ -145,7 +157,12 @@ export default function App() {
       const response = await fetch('/api/summarize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcripts: completedItems })
+        body: JSON.stringify({
+          transcripts: completedItems.map(({ fileName, transcription }) => ({
+            fileName,
+            text: transcription,
+          })),
+        })
       });
 
       if (!response.ok) {
