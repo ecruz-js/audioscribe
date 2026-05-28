@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "audioscribe",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,8 +11,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^2.6.0",
-    "@tailwindcss/vite": "^4.1.14",
+"@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
