@@ -1,4 +1,7 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+// dotenv solo carga `.env` por defecto; `.env.local` es convención de Vite.
+// Cargamos ambos, con `.env.local` teniendo precedencia.
+dotenv.config({ path: ['.env.local', '.env'] });
 import express from 'express';
 import path from 'path';
 import multer from 'multer';
