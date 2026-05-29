@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# AudioScribe
 
-# Run and deploy your AI Studio app
+Transcribe WhatsApp voice notes and generate a combined summary, powered by OpenRouter.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/e348d478-c30f-4b2e-a4f9-b9d09c7a3b59
+React 19 + Vite + Express + TypeScript + Tailwind. Transcription and summary use
+`google/gemini-2.5-flash` via the OpenRouter chat-completions API.
 
-## Run Locally
+## Run locally
 
-**Prerequisites:**  Node.js
+**Prerequisites:** Node.js, an OpenRouter API key (https://openrouter.ai/keys).
 
+1. Install dependencies: `bun install`
+2. Copy `.env.example` to `.env.local` and set `OPENROUTER_API_KEY`.
+   Optionally set `OPENROUTER_MODEL` (defaults to `google/gemini-2.5-flash`).
+3. Run the app: `bun run dev` → http://localhost:3000
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Features
+
+- Drag & drop or record WhatsApp audio; sequential transcription queue.
+- Combined intelligent summary across all transcriptions.
+- Transcriptions and summary persist in `localStorage` (audio itself is not stored).
+- Per-item delete / retry / copy; copy & download the summary as Markdown.
+
+## Build
+
+`bun run build` then `bun run start` (serves `dist/` in production mode).

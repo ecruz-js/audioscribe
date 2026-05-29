@@ -5,11 +5,23 @@ import { TranscriptionSummary } from './components/TranscriptionSummary';
 import { AudioItem, AudioStatus } from './types';
 import { parseWhatsAppDate } from './utils';
 import { MessageSquareQuote, Sparkles } from 'lucide-react';
+import { useLocalStorage } from './hooks/useLocalStorage';
 
 export default function App() {
-  const [items, setItems] = useState<AudioItem[]>([]);
-  const [summary, setSummary] = useState<string>('');
+  const [items, setItems] = useState<AudioItem[]>(() => {
+    try {
+      const raw = localStorage.getItem('audioscribe.items');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as AudioItem[];
+      // Las fechas se serializan como string -> rehidratar a Date
+      return parsed.map((it) => ({ ...it, date: it.date ? new Date(it.date) : undefined }));
+    } catch {
+      return [];
+    }
+  });
+  const [summary, setSummary] = useLocalStorage<string>('audioscribe.summary', '');
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   
   // Track if we are currently processing queue so we don't start multiple workers
   const isProcessingQueue = useRef(false);
@@ -23,7 +35,10 @@ export default function App() {
     for (let i = 0; i < updatedItems.length; i++) {
       if (updatedItems[i].status === 'idle') {
         const item = updatedItems[i];
-        
+
+        // Items hydrated from localStorage have no audio in memory — skip them.
+        if (!item.file && !item.blob) continue;
+
         // Mark as processing
         setItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'processing' } : p));
         
@@ -63,6 +78,15 @@ export default function App() {
     }
     
     isProcessingQueue.current = false;
+
+    // Items may have been added while we were processing; pick them up now
+    // that the lock is released.
+    setItems(prev => {
+      if (prev.some(p => p.status === 'idle' && (p.file || p.blob))) {
+        queueMicrotask(() => processQueue(prev));
+      }
+      return prev;
+    });
   };
 
   useEffect(() => {
@@ -70,6 +94,15 @@ export default function App() {
     const hasIdle = items.some(item => item.status === 'idle');
     if (hasIdle) {
       processQueue(items);
+    }
+  }, [items]);
+
+  useEffect(() => {
+    try {
+      const serializable = items.map(({ file, blob, ...rest }) => rest);
+      localStorage.setItem('audioscribe.items', JSON.stringify(serializable));
+    } catch {
+      // ignore
     }
   }, [items]);
 
@@ -85,11 +118,17 @@ export default function App() {
     // Sort items if they have dates
     setItems(prev => {
       const combined = [...prev, ...newItems];
-      return combined.sort((a, b) => {
-        if (a.date && b.date) return a.date.getTime() - b.date.getTime();
-        // If sorting mixed with no dates, just put dates later or maintain order
-        return 0; // naive for now
-      });
+      return combined
+        .map((item, index) => ({ item, index }))
+        .sort((a, b) => {
+          const da = a.item.date?.getTime();
+          const db = b.item.date?.getTime();
+          if (da != null && db != null) return da - db;
+          if (da != null) return -1; // con fecha va antes
+          if (db != null) return 1;
+          return a.index - b.index; // ambos sin fecha: orden de inserción
+        })
+        .map(({ item }) => item);
     });
   };
 
@@ -112,12 +151,18 @@ export default function App() {
 
     setIsSummarizing(true);
     setSummary('');
+    setSummaryError(null);
 
     try {
       const response = await fetch('/api/summarize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcripts: completedItems })
+        body: JSON.stringify({
+          transcripts: completedItems.map(({ fileName, transcription }) => ({
+            fileName,
+            text: transcription,
+          })),
+        })
       });
 
       if (!response.ok) {
@@ -129,10 +174,24 @@ export default function App() {
       setSummary(data.text);
     } catch (error) {
       console.error(error);
-      alert('Failed to generate summary');
+      setSummaryError('Failed to generate summary');
     } finally {
       setIsSummarizing(false);
     }
+  };
+
+  const handleDeleteItem = (id: string) => {
+    setItems(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleRetryItem = (id: string) => {
+    setItems(prev => prev.map(p => {
+      // Solo se puede reintentar si aún hay audio en memoria de esta sesión
+      if (p.id === id && (p.file || p.blob)) {
+        return { ...p, status: 'idle', error: undefined };
+      }
+      return p;
+    }));
   };
 
   const completedCount = items.filter(i => i.status === 'done').length;
@@ -175,9 +234,10 @@ export default function App() {
           </div>
         )}
 
+        {summaryError && <p className="text-xs text-red-400">{summaryError}</p>}
         <TranscriptionSummary summary={summary} isSummarizing={isSummarizing} />
 
-        <AudioItemsList items={items} />
+        <AudioItemsList items={items} onDelete={handleDeleteItem} onRetry={handleRetryItem} />
 
       </main>
     </div>
